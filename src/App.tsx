@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BigWig } from '@gmod/bbi'
 import { RemoteFile } from 'generic-filehandle'
+import GoogleLogin from 'react-google-login'
 import './App.css';
 
 function App() {
@@ -31,6 +32,11 @@ function App() {
     setBigWigHeader(JSON.stringify(header, null, 2))
   }
 
+
+  const responseGoogle = (response: any) => {
+    console.log(response);
+  }
+
   return (
     <div className="App">
     <form onSubmit={onFormSubmit}>
@@ -50,6 +56,12 @@ function App() {
     </form>
     <div style={{color: 'red'}}>{errorMessage}</div>
     <textarea readOnly value={bigWigHeader} rows={70} cols={50}/>
+    <GoogleLogin 
+      clientId='20156747540-bes2tq75790efrskmb5pa3hupujgenb2.apps.googleusercontent.com'
+      buttonText='Login'
+      cookiePolicy={'single_host_origin'}
+      onSuccess={responseGoogle}
+    />
     </div>
   );
 }
