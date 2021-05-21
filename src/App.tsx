@@ -33,8 +33,26 @@ function App() {
   }
 
 
-  const responseGoogle = (response: any) => {
+  const responseGoogle = async (response: any) => {
     console.log(response);
+    const tokenInfo = response.tokenObj
+    console.log(tokenInfo.access_token)
+    let fetchResponse
+    try {
+      fetchResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
+        credentials: 'include',
+        headers: {
+          'Authorization': `${tokenInfo.token_type} ${tokenInfo.access_token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      })
+    }
+    catch(error){
+      console.log(error)
+    }
+
+    const json = await fetchResponse?.json()
+    console.log(json)
   }
 
   return (
@@ -59,6 +77,8 @@ function App() {
     <GoogleLogin 
       clientId='20156747540-bes2tq75790efrskmb5pa3hupujgenb2.apps.googleusercontent.com'
       buttonText='Login'
+      scope='https://www.googleapis.com/auth/drive'
+      // scope='https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly	https://www.googleapis.com/auth/drive.readonly'
       cookiePolicy={'single_host_origin'}
       onSuccess={responseGoogle}
     />
