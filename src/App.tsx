@@ -13,7 +13,7 @@ function App() {
     token_type: '',
     access_token: '',
   })
-  const [files, setFiles] = useState([])
+  const [files, setFiles] = useState<any[]>([])
 
   function onBigWigUrlChange(event: React.ChangeEvent<HTMLInputElement>) {
     setErrorMessage('')
@@ -42,29 +42,41 @@ function App() {
       }
       const urlId = getIdFromUrl(bigWigUrlValidated)
       console.log(urlId ? urlId[0] : '')
-      try{
-        const response = await fetch(`https://www.googleapis.com/drive/v2/files/${urlId}`, {
-          credentials: 'include',
-          headers: {
-            'Authorization': `${tokenInfo.token_type} ${tokenInfo.access_token}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          }
-        })
-        const json = await response.json()
-        setBigWigHeader(json.title)
-        console.log('file', json)
-      }
-      catch(error){
-        console.error(error)
-        setErrorMessage('could not fetch file')
-        return
-      }
+        const response = await fetchGoogleDriveFile(urlId)
+        if(response){
+          const test = await response.json()
+          const webContentLink = test.webContentLink
+          const filehandle = new RemoteFile(webContentLink)
+          const file = new BigWig({ filehandle })
+          const header = await file.getHeader()
+          console.log(test)
+          setBigWigHeader(JSON.stringify(header, null, 2))
+        }
     }
     else{
       const filehandle = new RemoteFile(bigWigUrlValidated)
       const file = new BigWig({ filehandle })
       const header = await file.getHeader()
       setBigWigHeader(JSON.stringify(header, null, 2))
+    }
+  }
+
+  async function fetchGoogleDriveFile(urlId: any){
+    try{
+      const response = await fetch(`https://www.googleapis.com/drive/v2/files/${urlId}`, {
+        credentials: 'include',
+        headers: {
+          'Authorization': `${tokenInfo.token_type} ${tokenInfo.access_token}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      })
+
+      return response
+    }
+    catch(error){
+      console.error(error)
+      setErrorMessage('could not fetch file')
+      return
     }
   }
 
@@ -89,7 +101,7 @@ function App() {
 
     const json = await fetchResponse?.json()
     console.log(json)
-    setFiles(json)
+    setFiles(json.files)
   }
 
 
@@ -113,18 +125,44 @@ function App() {
           value={bigWigUrl}
           onChange={onBigWigUrlChange}
           required
+          autoComplete="off"
         />
       </label>
       <br />
       <input type="submit" value="Get header" />
     </form>
     <button onClick={fetchAllFiles}> Fetch all files</button>
+    {files.length > 0 && <div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Id</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            files.map((file: any) => {
+              return (
+                <tr key={file.name} >
+                  <td onClick={() =>{ 
+                    fetchGoogleDriveFile(file.id)
+                    console.log('here')
+                  }}>{file.name}</td>
+                  <td>{file.id}</td>
+                </tr>
+              )
+            })
+          }
+        </tbody>
+      </table>
+    </div>}
     <div style={{color: 'red'}}>{errorMessage}</div>
     <textarea readOnly value={bigWigHeader} rows={70} cols={50}/>
     <GoogleLogin 
       clientId='20156747540-bes2tq75790efrskmb5pa3hupujgenb2.apps.googleusercontent.com'
       buttonText='Login'
-      scope='https://www.googleapis.com/auth/drive.metadata'
+      scope='https://www.googleapis.com/auth/drive'
       // scope='https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly	https://www.googleapis.com/auth/drive.readonly'
       cookiePolicy={'single_host_origin'}
       onSuccess={responseGoogle}
