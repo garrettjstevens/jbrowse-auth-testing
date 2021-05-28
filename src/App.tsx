@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BigWig } from '@gmod/bbi'
 import { RemoteFile } from 'generic-filehandle'
 import GoogleLogin from 'react-google-login'
@@ -14,6 +14,7 @@ function App() {
     access_token: '',
   })
   const [files, setFiles] = useState<any[]>([])
+  const [windowHandle, setWindowHandle] = useState<Window | null>(null)
 
   function onBigWigUrlChange(event: React.ChangeEvent<HTMLInputElement>) {
     setErrorMessage('')
@@ -120,6 +121,41 @@ function App() {
     setTokenInfo(tokenInfo)
   }
 
+  const dropboxOauth = async() => {
+    const data = {
+      client_id: 'wyngfdvw0ntnj5b',
+      redirect_uri: 'http://localhost:3000',
+      response_type: 'code'
+    }
+
+    const params = Object.entries(data)
+    .map(([key, val]) => `${key}=${encodeURIComponent(val)}`)
+    .join('&')
+
+    setWindowHandle(createOauthWindow(`https://www.dropbox.com/oauth2/authorize?${params}`))
+  //   if(windowHandle)
+  //   {  
+  //     console.log(windowHandle)
+  //     windowHandle.addEventListener("message", (event) => {
+  //       console.log(event)
+  //     })
+  //  }
+  }
+
+  useEffect(() => {
+    console.log('here')
+    console.log(windowHandle)
+
+    // get href, close if there is a code, send code to parent(opener)
+
+  }, [windowHandle])
+
+
+  function createOauthWindow(url: string, name = 'Authorization', width = 500, height = 600, left = 0, top = 0) {
+    const options =   `width=${width},height=${height},left=${left},top=${top}`;
+    return window.open(url, name, options);
+  }
+
   return (
     <div className="App">
     <form onSubmit={onFormSubmit}>
@@ -190,6 +226,7 @@ function App() {
       cookiePolicy={'single_host_origin'}
       onSuccess={responseGoogle}
     />
+    <button onClick={dropboxOauth}>Dropbox Login</button>
     </div>
   );
 }
