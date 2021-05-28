@@ -45,8 +45,16 @@ function App() {
         const response = await fetchGoogleDriveFile(urlId)
         if(response){
           const test = await response.json()
-          const webContentLink = test.webContentLink
-          const filehandle = new RemoteFile(webContentLink)
+          console.log(test)
+          const filehandle = new RemoteFile(test.downloadUrl, {
+            overrides: {
+              credentials: 'include',
+              headers: {
+                'Authorization': `${tokenInfo.token_type} ${tokenInfo.access_token}`,
+                'Content-Type': 'application/octet-stream'
+              }
+            }
+          })
           const file = new BigWig({ filehandle })
           const header = await file.getHeader()
           console.log(test)
@@ -57,6 +65,7 @@ function App() {
       const filehandle = new RemoteFile(bigWigUrlValidated)
       const file = new BigWig({ filehandle })
       const header = await file.getHeader()
+      console.log(filehandle, file, header)
       setBigWigHeader(JSON.stringify(header, null, 2))
     }
   }
@@ -64,7 +73,6 @@ function App() {
   async function fetchGoogleDriveFile(urlId: any){
     try{
       const response = await fetch(`https://www.googleapis.com/drive/v2/files/${urlId}`, {
-        credentials: 'include',
         headers: {
           'Authorization': `${tokenInfo.token_type} ${tokenInfo.access_token}`,
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -88,7 +96,6 @@ function App() {
     let fetchResponse
     try {
       fetchResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
-        credentials: 'include',
         headers: {
           'Authorization': `${tokenInfo.token_type} ${tokenInfo.access_token}`,
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -145,9 +152,25 @@ function App() {
             files.map((file: any) => {
               return (
                 <tr key={file.name} >
-                  <td onClick={() =>{ 
-                    fetchGoogleDriveFile(file.id)
+                  <td onClick={async() =>{ 
+                    const response = await fetchGoogleDriveFile(file.id)
                     console.log('here')
+                    if(response){
+                      const test = await response.json()
+                      console.log(test)
+                      const filehandle = new RemoteFile(test.downloadUrl, {
+                        overrides: {
+                          headers: {
+                            'Authorization': `${tokenInfo.token_type} ${tokenInfo.access_token}`,
+                            'Content-Type': 'application/octet-stream'
+                          }
+                        }
+                      })
+                      const file = new BigWig({ filehandle })
+                      const header = await file.getHeader()
+                      console.log(test)
+                      setBigWigHeader(JSON.stringify(header, null, 2))
+                    }
                   }}>{file.name}</td>
                   <td>{file.id}</td>
                 </tr>
