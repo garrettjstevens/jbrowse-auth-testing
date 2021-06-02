@@ -160,18 +160,27 @@ function App() {
         //     'Dropbox-API-Arg': JSON.stringify(data),
         //   },
         // })
-        const filehandle = new RemoteFile(bigWigUrlValidated, {
+
+        const fileResponse = await fetch('https://api.dropboxapi.com/2/files/get_temporary_link', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${dbTokenInfo.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({path: json.id}),
+
+        })
+        const fileJson = await fileResponse.json()
+        console.log(fileJson)
+        const filehandle = new RemoteFile(fileJson.link, {
           overrides: {
-            credentials: 'include',
             headers: {
-              'Authorization': `${dbTokenInfo.token_type} ${dbTokenInfo.access_token}`,
-              'Content-Type': 'application/octet-stream'
-            }
+              'Authorization': `Bearer ${dbTokenInfo.access_token}`,
+            },
           }
         })
         const file = new BigWig({ filehandle })
         const header = await file.getHeader()
-        console.log(test)
         setBigWigHeader(JSON.stringify(header, null, 2))
       }
     }
